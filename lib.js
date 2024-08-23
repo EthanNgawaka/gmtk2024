@@ -36,7 +36,7 @@ function gamepadHandler(e,connect){
     }
 }
 
-let Camera = {scale:1,x:0,y:0,target:[0,0],speed:0.1}
+let Camera = {scale:1,x:0,y:0,target:[0,0],speed:0.1, shake: 0, shakeIntensity:50}
 
 var mouse = {x: 0, y: 0, scroll:0,oldx: 0, oldy: 0,
 	pressed: {left: false, middle: false, right: false},
@@ -50,6 +50,7 @@ this.canvas.addEventListener('wheel',function(event){
     mouse.scroll = event
     event.preventDefault();
 }, false);
+
 
 canvas.addEventListener('mousemove', function(evt) {
     mouse.oldx = mouse.x
@@ -178,6 +179,28 @@ function arrayRemove(arr, value) {
     });
 }
 
+let freeze = 0;
+
+function showText(text, X, Y, Size, colour = "rgb(0, 0, 0)", bold = false, stroke = false){
+	c.beginPath();
+	if(bold === true){
+		c.font = "bold "+Size+"px Roboto Mono";
+	}
+	else{
+		c.font = Size+"px Roboto Mono"
+	}
+	c.textAlign = "center";
+	if(stroke === false){
+		c.fillStyle=colour;
+		c.fillText(text, X, Y);
+	}
+	if(stroke === true){
+		c.lineWidth = Size/25;
+		c.strokeStyle = colour;
+		c.strokeText(text, X, Y)
+	}
+}
+
 function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4){ //returns [x,y] of intersection, if there is no intersection then return false
 	var den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 	if(den == 0){return false}
@@ -257,11 +280,7 @@ class image{
 
 	drawImg(X,Y,W,H, alpha, dsdx=[0,0], dwdh=[0,0]){
 		c.globalAlpha = alpha;
-		if(dwdh == [0,0]){
-			c.drawImage(this.img, X,Y, W,H);
-		}else{
-			c.drawImage(this.img,...dsdx,...dwdh,X,Y,W,H);
-		}
+		c.drawImage(this.img, X,Y, W,H);
 		c.globalAlpha = 1;
 	}
 
@@ -292,12 +311,17 @@ class spriteSheet{
         this.timer = 0;
         this.draww = w;
         this.drawh = h;
+		this.bounce = false;
+		this.changeW = this.w;
     }
     draw(alpha = 1){
         c.save();
         if(this.sheetX >= this.states[this.state][1]*this.w){
             this.sheetX = 0;
         }
+		if(this.sheetX < 0){
+			this.sheetX = 0;
+		}
 		c.globalAlpha = alpha;
         c.drawImage(this.img,this.sheetX,this.states[this.state][0],this.w,this.h,this.x,this.y,this.draww,this.drawh);
         c.restore();
@@ -306,14 +330,25 @@ class spriteSheet{
         this.states[statename] = [correspondingLine*this.h-this.h,numofframes];
         this.state = statename;
     }
+	setState(statename){
+		this.state = statename;
+	}
     frameCalc(startingframe){
         this.timer++;
         if (this.timer > this.fps){
             this.timer = 0;
-            this.sheetX+=this.w;
-            if(this.sheetX >= this.states[this.state][1]*this.w){
-                this.sheetX = startingframe*this.w;
-            }
+            this.sheetX+=this.changeW;
+
+			if(this.bounce){
+				if(this.sheetX >= (this.states[this.state][1]-1)*this.w || this.sheetX <= 0){
+					this.changeW *= -1;
+				}
+
+			}else{
+				if(this.sheetX >= this.states[this.state][1]*this.w){
+					this.sheetX = startingframe*this.w;
+				}
+			}
         }
     }
 }
@@ -333,7 +368,12 @@ function drawLine(point1, point2, col, lw = 1,alpha=1){
 }
 
 function drawRect(rect, col, fill=1, fillcolor=col, alpha=1, ignoreCamera=false) {
-	let [x,y,w,h] = getWorldRect(rect,ignoreCamera);
+	let [x,y,w,h] = [0,0,0,0];
+	if(ignoreCamera){
+		[x,y,w,h] = rect;
+	}else{
+		[x,y,w,h] = getWorldRect(rect,ignoreCamera);
+	}
     // Draw the rectangle
     c.save();
     c.strokeStyle = col;
@@ -465,6 +505,34 @@ function drawRotatedRect(rect, colour, rotation){
 	c.beginPath();
 	c.rect(-W/2,-H/2, W, H);
 	c.fill();
+	c.restore();
+}
+// convert degrees to radians
+function degreesToRadians(degrees) {
+	return degrees * (math.pi / 180);
+}
+function drawArc(x,y,r,angle,col){
+	c.save();
+	var centerX = x;  // x coordinate of the center
+	var centerY = y;  // y coordinate of the center
+	var radius = r;   // radius of the arc
+	var startAngle = 0; // start angle in degrees
+	var endAngle = angle;  // end angle in degrees
+
+	// Convert angles from degrees to radians
+	var startAngleRad = degreesToRadians(startAngle);
+	var endAngleRad = degreesToRadians(endAngle);
+
+	c.lineWidth = 15;
+	c.beginPath();
+	c.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+	c.strokeStyle = 'lightgray';
+	c.stroke();
+	// Draw the arc
+	c.beginPath();
+	c.arc(centerX, centerY, radius, startAngleRad, endAngleRad);
+	c.strokeStyle = col;
+	c.stroke();
 	c.restore();
 }
 class TextBox {

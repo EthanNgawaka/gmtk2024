@@ -36,6 +36,9 @@ class Entity{
 	get rect(){
 		return [this.x,this.y,this.w,this.h];
 	}
+	get center(){
+		return {x:this.x+this.w/2, y:this.y+this.h/2};
+	}
 }
 
 class RigidBody extends Entity{
@@ -56,6 +59,10 @@ class RigidBody extends Entity{
 		this.vel = math.add(this.vel, math.multiply(accel, dt));
 		this.vel = math.multiply(this.drag, this.vel);
 
+		let magnitude = math.sqrt(this.vel[0]**2 + this.vel[1]**2);
+		if(magnitude > 10000){
+			console.log('AH')
+		}
 		this.x += this.vel[0]*dt;
 		this.y += this.vel[1]*dt;
 
@@ -194,7 +201,11 @@ class World{
 			entity.update(dt);
 		}
 		for(let id of this.toRemove){
+			for(let tag in this.collisionLayers){
+				this.collisionLayers[tag] = this.collisionLayers[tag].filter(x => !this.toRemove.includes(x));
+			}
 			delete this.entities[id];
+			
 		}
 		this.toRemove = [];
 	}
@@ -223,7 +234,8 @@ class World{
 	}
 
 	checkCollisions(entity){
-		for(let tag of  entity.collider.collideables){
+		//console.log(this.collisionLayers);
+		for(let tag of entity.collider.collideables){
 			try{
 				for(let id of this.collisionLayers[tag]){
 					const otherEntity = this.entities[id];
@@ -233,7 +245,6 @@ class World{
 				}
 			}
 			catch(e){
-				//console.log(e);
 			}
 		}
 	}

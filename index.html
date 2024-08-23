@@ -4,10 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
     <title>Project</title>
     <style>
+		body {
+			margin: 0;
+			overflow: hidden;
+		}
         canvas {
-            border: 1px solid black;
+			cursor: url("assets/crosshair002.png"), auto;
         }
     </style>
 </head>
@@ -16,7 +23,9 @@
     <canvas id="main" width="960" height="540"></canvas>
     <script src="lib.js"></script>
     <script src="world.js"></script>
+    <script src="particle.js"></script>
     <script src="player.js"></script>
+    <script src="enemy.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzicato/0.6.4/Pizzicato.js"></script>
     <script src="main.js"></script>
     
